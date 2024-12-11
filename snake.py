@@ -66,19 +66,21 @@ def create_text_and_rect(text, color, background_color, **locations):
 title_text, text_rect = create_text_and_rect("~~Snake~~", GREEN, DARKRED,
                                              center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
 
-text = "Score: " +str(score)
+score_text, score_rect = create_text_and_rect("Score: " +str(score), GREEN, DARKRED, topleft=(10, 10))
 # TODO: unpack the tuple from create_text_and_rect into a score_text and score_rect variable
 # TODO: text is "Score: " + str(score)
 # TODO: color is GREEN
 # TODO: background_color is DARKRED
 # TODO: locations are topleft=(10, 10)
 
+game_over_text, game_over_rect = create_text_and_rect("GAMEOVER", RED, DARKGREEN, center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
 # TODO: unpack the tuple from create_text_and_rect into a game_over_text and game_over_rect variable
 # TODO: text is "GAMEOVER"
 # TODO: color is RED
 # TODO: background_color is DARKGREEN
 # TODO: locations are center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
 
+continue_text, continue_rect = create_text_and_rect("Press Any Key to Play Again", RED, DARKGREEN, center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 64))
 # TODO: unpack the tuple from create_text_and_rect into a continue_text and continue_rect variable
 # TODO: text is "Press any key to play again"
 # TODO: color is RED
@@ -87,6 +89,7 @@ text = "Score: " +str(score)
 
 
 # Set sounds and music
+pick_up_sound = pygame.mixer.Sound("pick_up_sound.wav")
 # TODO: create a variable called pick_up_sound and set to pygame.mixer.Sound("pick_up_sound.wav")
 # TODO: make sure you have pick_up_sound.wav in the same folder as snake.py.
 # TODO: make sure both of your files are not in the .venv folder.  Otherwise I won't see what you've done.
@@ -94,12 +97,17 @@ text = "Score: " +str(score)
 
 # Set images (in this case, use simple rects...so just create their coordinates)
 # For a rectangle you need (top-left x, top-left y, width, height)
+apple_coord = (500, 500, SNAKE_SIZE, SNAKE_SIZE)
+apple_rect = pygame.draw.rect(display_surface, RED, apple_coord)
 # TODO: create a variable called apple_coord and set to (500, 500, SNAKE_SIZE, SNAKE_SIZE)
 # TODO: create a variable called apple_rect and set to pygame.draw.rect(display_surface, RED, apple_coord)
 
+head_coord = (head_x, head_y, SNAKE_SIZE, SNAKE_SIZE)
+head_rect = pygame.draw.rect(display_surface, GREEN, head_coord)
 # TODO: create a variable called head_coord and set to (head_x, head_y, SNAKE_SIZE, SNAKE_SIZE)
 # TODO: create a variable called head_rect and set to pygame.draw.rect(display_surface, GREEN, head_coord)
 
+body_coords = ()
 # TODO: create a variable called body_coords and set to an empty list
 
 
@@ -112,6 +120,18 @@ def move_snake(event):
     global snake_dx, snake_dy
     if event.type == pygame.KEYDOWN:
         key = event.key
+        if key == pygame.K_LEFT:
+            snake_dx = -1 * SNAKE_SIZE
+            snake_dy = 0
+        if key == pygame.K_RIGHT:
+            snake_dx = SNAKE_SIZE
+            snake_dy = 0
+        if key == pygame.K_UP:
+            snake_dx = 0
+            snake_dy = -1 * SNAKE_SIZE
+        if key == pygame.K_DOWN:
+            snake_dx = 0
+            snake_dy = SNAKE_SIZE
         # TODO: check if key is equal to pygame.K_LEFT
             # TODO: if so set snake_dx to -1 * SNAKE_SIZE and snake_dy = 0
         # TODO: check if key is equal to pygame.K_RIGHT
@@ -125,11 +145,14 @@ def move_snake(event):
 
 def check_quit(event):
     global running
+    if event == pygame.QUIT:
+        running = False
     # TODO: if event is equal to pygame.QUIT  set running to false
 
 
 def check_events():
     global running
+    pygame.event.get()
     # TODO: create a for loop events is the variable pygame.event.get() is the list
         # TODO: call check_quit(event)
         # TODO: call move_snake(event)
@@ -148,6 +171,15 @@ def handle_snake():
 
 def reset_game_after_game_over(event):
     global is_paused, score, head_x, head_y, head_coord, body_coords, snake_dx, snake_dy
+    event.type = pygame.KEYDOWN
+    set(score=0)
+    set(head_x=WINDOW_WIDTH // 2)
+    set(head_y=WINDOW_HEIGHT // 2 + 100)
+    set(head_coord=(head_x, head_y, SNAKE_SIZE, SNAKE_SIZE))
+    set(body_coords=())
+    set(snake_dx=0)
+    set(snake_dy=0)
+    set(is_paused=False)
     # TODO: if event.type is equal to pygame.KEYDOWN
         # TODO: set score to 0
         # TODO: set head_x to WINDOW_WIDTH // 2
@@ -174,6 +206,12 @@ def check_game_over():
     global body_coords
     global running
     global is_paused
+    if head_rect.left < 0:
+        display_surface.blit(game_over_text, game_over_rect)
+        display_surface.blit(continue_text, continue_rect)
+        pygame.display.update()
+        is_paused= True
+        while is_paused:
     # TODO: if head_rect.left is negative or head_rect.right is greater than WINDOW_WIDTH or head_rect.top is negative or head_rect.bottom is greater than WINDOW_HEIGHT
     # or head_coord in body_coords
         # TODO: then do the following
@@ -188,6 +226,13 @@ def check_game_over():
 
 def check_collisions():
     global score, apple_x, apple_y, apple_coord, body_coords
+    if head_rect.colliderect(apple_rect):
+        score = (+1)
+        pick_up_sound.play()
+        apple_x = random.randint(0, WINDOW_WIDTH - SNAKE_SIZE)
+        apple_y = random.randint(0, WINDOW_HEIGHT - SNAKE_SIZE)
+        apple_coord = (apple_x, apple_y, SNAKE_SIZE, SNAKE_SIZE)
+        body_coords.append(head_coord)
     # TODO: if head_rect.colliderect(apple_rect)
         # TODO: add 1 to the score
         # TODO: call pick_up_sound.play()
@@ -198,6 +243,8 @@ def check_collisions():
         pass # TODO: remove this pass when done.
 
 def blit_hud():
+    display_surface.blit(title_text, text_rect)
+    display_surface.blit(score_text, score_rect)
     # TODO: call display_surface.blit(title_text, title_rect)
     # TODO: call display_surface.blit(score_text, score_rect)
     pass  # TODO: remove this pass when done.
