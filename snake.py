@@ -257,6 +257,8 @@ def blit_assets():
     pass  # TODO: remove this pass when done.
 
 def update_display_and_tick_clock():
+    pygame.display.update()
+    clock.tick(FPS)
     # TODO: call pygame.display.update()
     # TODO: call clock.tick(FPS)
     pass  # TODO: remove this pass when done.
@@ -275,9 +277,11 @@ while running:
     check_collisions()
 
     # Update HUD
+    score_text = font.render("Score: " + str(score), True, GREEN, DARKRED)
     # TODO: set score_text to font.render("Score: " + str(score), True, GREEN, DARKRED)
 
     # Fill the surface
+    display_surface.fill(WHITE)
     # TODO: call display_surface.fill(WHITE)
 
     # Blit HUD
